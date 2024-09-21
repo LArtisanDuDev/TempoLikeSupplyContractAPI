@@ -18,19 +18,26 @@ class TempoLikeSupplyContractAPI
 public:
   TempoLikeSupplyContractAPI(String client_secret, String client_id);
   ~TempoLikeSupplyContractAPI();
-  void setDebug(bool debug);
-  int fetchColors(String today, String tomorrow, String afterTomorrow);
+  // des accesseurs ça serait mieux...
   String todayColor;
   String tomorrowColor;
 
-protected:
-  bool _debug;
+  void setDebug(bool debug);
+
+  // mes méthodes pour mon projet
+  int fetchColors(String today, String tomorrow, String afterTomorrow);
+  int fetchPreviewRTE(String tomorrow);
+  void fetchAccessToken();
+  String frenchColor(String color);
+
+  // Les appels de Services RTE bruts
+  String oauthService();
+  String tempoLikeSupplyContractService(String startDate, String endDate);
+  String previewRTEService();
 
 private:
-  int previewRTE(String tomorrow);
-  void fetchAccessToken();
   String _client_secret;
   String _client_id;
   String _access_token;
-  bool _authSuccess;
+  bool _debug;
 };
