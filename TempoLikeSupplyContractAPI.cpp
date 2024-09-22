@@ -8,6 +8,9 @@ TempoLikeSupplyContractAPI::TempoLikeSupplyContractAPI(String client_secret, Str
   _client_id = client_id;
   tomorrowColor = DAY_NOT_AVAILABLE;
   todayColor = DAY_NOT_AVAILABLE;
+  countBlue = 0;
+  countRed = 0;
+  countWhite = 0;
 }
 
 TempoLikeSupplyContractAPI::~TempoLikeSupplyContractAPI()
@@ -24,11 +27,14 @@ void TempoLikeSupplyContractAPI::fetchAccessToken()
   _access_token = oauthService();
 }
 
-int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, String afterTomorrow)
+int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, String afterTomorrow, String debutSaison)
 {
   int retour = TEMPOAPI_KO;
   tomorrowColor = DAY_NOT_AVAILABLE;
   todayColor = DAY_NOT_AVAILABLE;
+  countBlue = 0;
+  countRed = 0;
+  countWhite = 0;
   if (_access_token == "")
   {
     fetchAccessToken();
@@ -39,34 +45,67 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
     return retour;
   }
   // je parie qu'il y aura un bug en passage heure d'hiver (on sera en GMT +1 au lieu de +2)
-  String body = tempoLikeSupplyContractService(today + "T00:00:00%2B02:00", afterTomorrow + "T00:00:00%2B02:00");
-  DynamicJsonDocument doc(2048);
+  String body = tempoLikeSupplyContractService(debutSaison + "T00:00:00%2B02:00", afterTomorrow + "T00:00:00%2B02:00");
+  DynamicJsonDocument doc(body.length());
   deserializeJson(doc, body);
   if (doc.containsKey("tempo_like_calendars"))
   {
     JsonArray results = doc["tempo_like_calendars"]["values"].as<JsonArray>();
+    String tmpColor = "";
     for (JsonObject result : results)
     {
+      tmpColor = frenchColor(result["value"].as<String>());
       if (_debug)
       {
-        Serial.println("Test");
-        Serial.println(result["start_date"].as<String>().substring(0, 10));
-        Serial.println(" == " + today);
-      }
-      if (result["start_date"].as<String>().substring(0, 10) == today)
-      {
-        todayColor = frenchColor(result["value"].as<String>());
-      }
-      else
-      {
-        tomorrowColor = frenchColor(result["value"].as<String>());
+        Serial.println(result["start_date"].as<String>().substring(0, 10) + " " + tmpColor);
       }
 
-      if (_debug)
+      if (result["start_date"].as<String>().substring(0, 10) == today)
       {
-        Serial.println("todayColor : " + todayColor);
-        Serial.println("tomorrowColor : " + tomorrowColor);
+        todayColor = tmpColor;
+        if (_debug)
+        {
+          Serial.println("Today Found");
+        }
       }
+      else if (result["start_date"].as<String>().substring(0, 10) == tomorrow)
+      {
+        tomorrowColor = tmpColor;
+        if (_debug)
+        {
+          Serial.println("Tommorow Found");
+        }
+      }
+      // on ne compte que les jours déjà passés.
+      else
+      {
+        if (tmpColor == "BLEU")
+        {
+          countBlue++;
+        }
+        else if (tmpColor == "BLANC")
+        {
+          countWhite++;
+        }
+        else if (tmpColor == "ROUGE")
+        {
+          countRed++;
+        }
+        else
+        {
+          Serial.println("Couleur non reconnue : " + tmpColor);
+        }
+      }
+    }
+
+    if (_debug)
+    {
+      Serial.print("countBlue : ");
+      Serial.println(countBlue);
+      Serial.print("countWhite : ");
+      Serial.println(countWhite);
+      Serial.print("countRed : ");
+      Serial.println(countRed);
     }
   }
   else
@@ -84,15 +123,15 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
     Serial.println("needPreviewRTE :");
     Serial.println(needPreviewRTE);
   }
-  retour = TEMPOAPI_OK;
 
+  retour = TEMPOAPI_OK;
   if (needPreviewRTE)
   {
     fetchPreviewRTE(tomorrow);
   }
+
   return retour;
 }
-
 
 int TempoLikeSupplyContractAPI::fetchPreviewRTE(String tomorrow)
 {
@@ -119,7 +158,7 @@ int TempoLikeSupplyContractAPI::fetchPreviewRTE(String tomorrow)
   }
   else
   {
-   
+
     Serial.println("Échec de la récupération des couleurs preview RTE");
   }
 
@@ -264,5 +303,6 @@ String TempoLikeSupplyContractAPI::frenchColor(String color)
     return "BLANC";
   if (color == "RED")
     return "ROUGE";
+  Serial.println("Couleur inconnue : " + color);
   return "???";
 }

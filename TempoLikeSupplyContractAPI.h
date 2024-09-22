@@ -21,11 +21,14 @@ public:
   // des accesseurs ça serait mieux...
   String todayColor;
   String tomorrowColor;
+  int countBlue;
+  int countWhite;
+  int countRed;
 
   void setDebug(bool debug);
 
   // mes méthodes pour mon projet
-  int fetchColors(String today, String tomorrow, String afterTomorrow);
+  int fetchColors(String today, String tomorrow, String afterTomorrow, String debutSaison);
   int fetchPreviewRTE(String tomorrow);
   void fetchAccessToken();
   String frenchColor(String color);
