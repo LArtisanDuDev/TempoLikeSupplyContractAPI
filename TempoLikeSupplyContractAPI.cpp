@@ -143,7 +143,7 @@ int TempoLikeSupplyContractAPI::fetchPreviewRTE(String tomorrow)
   String body = previewRTEService();
   if (body != "")
   {
-    DynamicJsonDocument doc(1024);
+    DynamicJsonDocument doc(body.length());
     deserializeJson(doc, body);
     if (doc.containsKey("values") && doc["values"].containsKey(tomorrow))
     {
@@ -185,14 +185,13 @@ String TempoLikeSupplyContractAPI::oauthService()
 
     if (httpCode > 0)
     {
-      DynamicJsonDocument doc(1024);
       String body = http.getString();
       if (_debug)
       {
         Serial.println("getAccessToken body :");
         Serial.println(body);
       }
-
+      DynamicJsonDocument doc(body.length());
       deserializeJson(doc, body);
       if (doc.containsKey("access_token"))
       {
