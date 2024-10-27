@@ -44,8 +44,8 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
     Serial.println("Erreur d'authent");
     return retour;
   }
-  // je parie qu'il y aura un bug en passage heure d'hiver (on sera en GMT +1 au lieu de +2)
-  String body = tempoLikeSupplyContractService(debutSaison + "T00:00:00%2B02:00", afterTomorrow + "T00:00:00%2B02:00");
+  // je parie qu'il y aura un bug en passage heure d'hiver (/ heure d'été) : on sera en GMT +1 au lieu de +2
+  String body = tempoLikeSupplyContractService(debutSaison + "T00:00:00%2B01:00", afterTomorrow + "T00:00:00%2B01:00");
   DynamicJsonDocument doc(body.length());
   deserializeJson(doc, body);
   if (doc.containsKey("tempo_like_calendars"))
