@@ -29,6 +29,7 @@ public:
 
   // mes méthodes pour mon projet
   int fetchColors(String today, String tomorrow, String afterTomorrow, String debutSaison);
+  int fecthColorsFreeApi(String today, String tomorrow, String saison);
   int fetchPreviewRTE(String today, String tomorrow);
   void fetchAccessToken();
   String frenchColor(String color);
@@ -37,6 +38,7 @@ public:
   String oauthService();
   String tempoLikeSupplyContractService(String startDate, String endDate);
   String previewRTEService();
+  String tempoService(String saison);
 
 private:
   String _client_secret;

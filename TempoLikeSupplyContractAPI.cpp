@@ -136,6 +136,110 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
   return retour;
 }
 
+// Plein de code dupliqué de la méthode fetchColors
+int TempoLikeSupplyContractAPI::fecthColorsFreeApi(String today, String tomorrow, String saison)
+{
+  int retour = TEMPOAPI_KO;
+  tomorrowColor = DAY_NOT_AVAILABLE;
+  todayColor = DAY_NOT_AVAILABLE;
+  countBlue = 0;
+  countRed = 0;
+  countWhite = 0;
+
+  String body = tempoService(saison);
+  DynamicJsonDocument doc(body.length());
+  deserializeJson(doc, body);
+  if (doc.containsKey("values"))
+  {
+    JsonObject results = doc["values"].as<JsonObject>();
+    String valeur = "";
+    String clef = "";
+    for (JsonPair kv : results)
+    {
+      clef = kv.key().c_str();
+      valeur = frenchColor(kv.value().as<String>());
+
+      if (_debug)
+      {
+        Serial.println(clef + ":" + valeur);
+      }
+
+      if (clef == today.substring(0, 10))
+      {
+        todayColor = valeur;
+        if (_debug)
+        {
+          Serial.println("Today Found");
+        }
+      }
+      else if (clef == tomorrow.substring(0, 10))
+      {
+        tomorrowColor = valeur;
+        if (_debug)
+        {
+          Serial.println("Tommorow Found");
+        }
+      }
+      // on ne compte que les jours déjà passés.
+      else
+      {
+        if (clef.length() == 10)
+        {
+          if (valeur == "BLEU")
+          {
+            countBlue++;
+          }
+          else if (valeur == "BLANC")
+          {
+            countWhite++;
+          }
+          else if (valeur == "ROUGE")
+          {
+            countRed++;
+          }
+          else
+          {
+            Serial.println("Couleur non reconnue : " + valeur);
+          }
+        }
+      }
+    }
+
+    if (_debug)
+    {
+      Serial.print("countBlue : ");
+      Serial.println(countBlue);
+      Serial.print("countWhite : ");
+      Serial.println(countWhite);
+      Serial.print("countRed : ");
+      Serial.println(countRed);
+    }
+  }
+  else
+  {
+    Serial.println("No tempo");
+  }
+
+  bool needPreviewRTE = (tomorrowColor == String(DAY_NOT_AVAILABLE));
+  if (_debug)
+  {
+    Serial.println("todayColor :");
+    Serial.println(todayColor);
+    Serial.println("tomorrowColor :");
+    Serial.println(tomorrowColor);
+    Serial.println("needPreviewRTE :");
+    Serial.println(needPreviewRTE);
+  }
+
+  retour = TEMPOAPI_OK;
+  if (needPreviewRTE)
+  {
+    fetchPreviewRTE(today.substring(0, 10), tomorrow.substring(0, 10));
+  }
+
+  return retour;
+}
+
 int TempoLikeSupplyContractAPI::fetchPreviewRTE(String today, String tomorrow)
 {
   int retour = TEMPOAPI_KO;
@@ -293,6 +397,48 @@ String TempoLikeSupplyContractAPI::previewRTEService()
     else
     {
       Serial.println("tempoLight Server Error : " + String(httpCode));
+    }
+    http.end();
+  }
+  return body;
+}
+
+String TempoLikeSupplyContractAPI::tempoService(String saison)
+{
+  String body = "";
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    HTTPClient http;
+    String url = "https://www.services-rte.com/cms/open_data/v1/tempo";
+    url += "?season=" + saison;
+
+    if (_debug)
+    {
+      Serial.println(url);
+    }
+
+    http.begin(url);
+    http.addHeader("Accept", "application/json");
+
+    int httpCode = http.GET();
+    if (_debug)
+    {
+      Serial.println("Server Response :");
+      Serial.println(httpCode);
+    }
+
+    if (httpCode > 0)
+    {
+      body = http.getString();
+      if (_debug)
+      {
+        Serial.println("tempo body :");
+        Serial.println(body);
+      }
+    }
+    else
+    {
+      Serial.println("tempo Error : " + http.errorToString(httpCode));
     }
     http.end();
   }
