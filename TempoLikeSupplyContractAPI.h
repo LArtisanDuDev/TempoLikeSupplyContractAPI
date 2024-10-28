@@ -29,7 +29,7 @@ public:
 
   // mes méthodes pour mon projet
   int fetchColors(String today, String tomorrow, String afterTomorrow, String debutSaison);
-  int fetchPreviewRTE(String tomorrow);
+  int fetchPreviewRTE(String today, String tomorrow);
   void fetchAccessToken();
   String frenchColor(String color);
 

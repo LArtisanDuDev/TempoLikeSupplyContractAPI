@@ -45,7 +45,10 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
     return retour;
   }
   // je parie qu'il y aura un bug en passage heure d'hiver (/ heure d'été) : on sera en GMT +1 au lieu de +2
-  String body = tempoLikeSupplyContractService(debutSaison + "T00:00:00%2B01:00", afterTomorrow + "T00:00:00%2B01:00");
+  debutSaison.replace("+", "%2B");
+  afterTomorrow.replace("+", "%2B");
+  
+  String body = tempoLikeSupplyContractService(debutSaison, afterTomorrow);
   DynamicJsonDocument doc(body.length());
   deserializeJson(doc, body);
   if (doc.containsKey("tempo_like_calendars"))
@@ -60,7 +63,7 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
         Serial.println(result["start_date"].as<String>().substring(0, 10) + " " + tmpColor);
       }
 
-      if (result["start_date"].as<String>().substring(0, 10) == today)
+      if (result["start_date"].as<String>().substring(0, 10) == today.substring(0, 10))
       {
         todayColor = tmpColor;
         if (_debug)
@@ -68,7 +71,7 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
           Serial.println("Today Found");
         }
       }
-      else if (result["start_date"].as<String>().substring(0, 10) == tomorrow)
+      else if (result["start_date"].as<String>().substring(0, 10) == tomorrow.substring(0, 10))
       {
         tomorrowColor = tmpColor;
         if (_debug)
@@ -127,17 +130,18 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
   retour = TEMPOAPI_OK;
   if (needPreviewRTE)
   {
-    fetchPreviewRTE(tomorrow);
+    fetchPreviewRTE(today.substring(0, 10), tomorrow.substring(0, 10));
   }
 
   return retour;
 }
 
-int TempoLikeSupplyContractAPI::fetchPreviewRTE(String tomorrow)
+int TempoLikeSupplyContractAPI::fetchPreviewRTE(String today, String tomorrow)
 {
   int retour = TEMPOAPI_KO;
   if (_debug)
   {
+    Serial.println("today : " + today);
     Serial.println("tomorrow : " + tomorrow);
   }
   String body = previewRTEService();
@@ -145,14 +149,15 @@ int TempoLikeSupplyContractAPI::fetchPreviewRTE(String tomorrow)
   {
     DynamicJsonDocument doc(body.length());
     deserializeJson(doc, body);
-    if (doc.containsKey("values") && doc["values"].containsKey(tomorrow))
+    if (doc.containsKey("values") && doc["values"].containsKey(tomorrow) && doc["values"].containsKey(today))
     {
+      todayColor = frenchColor(doc["values"][today].as<String>()) + "*";
       tomorrowColor = frenchColor(doc["values"][tomorrow].as<String>()) + "*";
       retour = TEMPOAPI_OK;
       if (_debug)
       {
-        Serial.println("Couleur preview de demain trouvée");
-        Serial.println(tomorrowColor);
+        Serial.println("Couleur preview trouvées");
+        Serial.println(todayColor + "/" + tomorrowColor);
       }
     }
   }
