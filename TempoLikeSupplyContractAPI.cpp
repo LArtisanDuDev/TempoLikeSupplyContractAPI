@@ -11,6 +11,7 @@ TempoLikeSupplyContractAPI::TempoLikeSupplyContractAPI(String client_secret, Str
   countBlue = 0;
   countRed = 0;
   countWhite = 0;
+  cptCall = 0;
 }
 
 TempoLikeSupplyContractAPI::~TempoLikeSupplyContractAPI()
@@ -291,7 +292,7 @@ String TempoLikeSupplyContractAPI::oauthService()
       Serial.println("Server Response :");
       Serial.println(httpCode);
     }
-
+    error_code[cptCall++] = httpCode + 1000; 
     if (httpCode > 0)
     {
       String body = http.getString();
@@ -346,6 +347,7 @@ String TempoLikeSupplyContractAPI::tempoLikeSupplyContractService(String startDa
     http.addHeader("Accept", "application/json");
 
     int httpCode = http.GET();
+    error_code[cptCall++] = httpCode + 2000;     
     if (_debug)
     {
       Serial.println("Server Response :");
@@ -378,7 +380,7 @@ String TempoLikeSupplyContractAPI::previewRTEService()
     HTTPClient http;
     http.begin("https://www.services-rte.com/cms/open_data/v1/tempoLight");
     int httpCode = http.GET();
-
+    error_code[cptCall++] = httpCode + 3000;     
     if (_debug)
     {
       Serial.println("tempoLight Server Response :");
@@ -421,6 +423,7 @@ String TempoLikeSupplyContractAPI::tempoService(String saison)
     http.addHeader("Accept", "application/json");
 
     int httpCode = http.GET();
+    error_code[cptCall++] = httpCode + 4000;     
     if (_debug)
     {
       Serial.println("Server Response :");

@@ -36,13 +36,20 @@ public:
 
   // Les appels de Services RTE bruts
   String oauthService();
+  // RTEAPI
   String tempoLikeSupplyContractService(String startDate, String endDate);
+  
+  // preview RTE si soucis
   String previewRTEService();
-  String tempoService(String saison);
 
+  // FreeAPI
+  String tempoService(String saison);
+  int error_code[6] = {};
+  
 private:
   String _client_secret;
   String _client_id;
   String _access_token;
+  int cptCall;
   bool _debug;
 };
