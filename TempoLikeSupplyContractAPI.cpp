@@ -50,7 +50,7 @@ int TempoLikeSupplyContractAPI::fetchColors(String today, String tomorrow, Strin
   afterTomorrow.replace("+", "%2B");
   
   String body = tempoLikeSupplyContractService(debutSaison, afterTomorrow);
-  DynamicJsonDocument doc(body.length());
+  DynamicJsonDocument doc(64000);
   deserializeJson(doc, body);
   if (doc.containsKey("tempo_like_calendars"))
   {
@@ -148,7 +148,7 @@ int TempoLikeSupplyContractAPI::fecthColorsFreeApi(String today, String tomorrow
   countWhite = 0;
 
   String body = tempoService(saison);
-  DynamicJsonDocument doc(body.length());
+  DynamicJsonDocument doc(64000);
   deserializeJson(doc, body);
   if (doc.containsKey("values"))
   {
@@ -252,8 +252,28 @@ int TempoLikeSupplyContractAPI::fetchPreviewRTE(String today, String tomorrow)
   String body = previewRTEService();
   if (body != "")
   {
-    DynamicJsonDocument doc(body.length());
+    DynamicJsonDocument doc(1024);
     deserializeJson(doc, body);
+    if (_debug)
+      {
+        if (doc.containsKey("values")) {
+          Serial.println("values trouvées");  
+        } else {
+          Serial.println("values non trouvées");
+        }
+
+        if (doc["values"].containsKey(tomorrow)) {
+          Serial.println(tomorrow + " trouvée");  
+        } else {
+          Serial.println(tomorrow + " non trouvée");
+        }
+
+        if (doc["values"].containsKey(today)) {
+          Serial.println(today + " trouvée");  
+        } else {
+          Serial.println(today + " non trouvée");
+        }
+      }
     if (doc.containsKey("values") && doc["values"].containsKey(tomorrow) && doc["values"].containsKey(today))
     {
       todayColor = frenchColor(doc["values"][today].as<String>()) + "*";
@@ -284,6 +304,8 @@ String TempoLikeSupplyContractAPI::oauthService()
     HTTPClient http;
 
     http.begin("https://digital.iservices.rte-france.com/token/oauth");
+    http.setTimeout(TIMEOUT);
+    http.setUserAgent(USER_AGENT);
     http.addHeader("Authorization", "Basic " + base64Auth);
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     int httpCode = http.POST("");
@@ -301,7 +323,7 @@ String TempoLikeSupplyContractAPI::oauthService()
         Serial.println("getAccessToken body :");
         Serial.println(body);
       }
-      DynamicJsonDocument doc(body.length());
+      DynamicJsonDocument doc(1024);
       deserializeJson(doc, body);
       if (doc.containsKey("access_token"))
       {
@@ -343,6 +365,8 @@ String TempoLikeSupplyContractAPI::tempoLikeSupplyContractService(String startDa
     }
 
     http.begin(url);
+    http.setTimeout(TIMEOUT);
+    http.setUserAgent(USER_AGENT);
     http.addHeader("Authorization", bearer);
     http.addHeader("Accept", "application/json");
 
@@ -379,6 +403,8 @@ String TempoLikeSupplyContractAPI::previewRTEService()
   {
     HTTPClient http;
     http.begin("https://www.services-rte.com/cms/open_data/v1/tempoLight");
+    http.setTimeout(TIMEOUT);
+    http.setUserAgent(USER_AGENT);
     int httpCode = http.GET();
     error_code[cptCall++] = httpCode + 3000;     
     if (_debug)
@@ -420,6 +446,8 @@ String TempoLikeSupplyContractAPI::tempoService(String saison)
     }
 
     http.begin(url);
+    http.setTimeout(TIMEOUT);
+    http.setUserAgent(USER_AGENT);
     http.addHeader("Accept", "application/json");
 
     int httpCode = http.GET();
